@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% set active_page = "memories" %}
+{% block title %}Memory {{ memory.id[:8] }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/memories" class="text-gray-500 hover:text-gray-300 text-sm">&larr; Back to memories</a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Main content -->
+    <div class="stat-card col-span-2">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="badge badge-{{ memory.type }}">{{ memory.type }}</span>
+            {% if memory.subtype %}<span class="text-gray-500 text-sm">/ {{ memory.subtype }}</span>{% endif %}
+            <span class="text-gray-600 text-xs">{{ memory.id }}</span>
+        </div>
+        <div class="prose prose-invert max-w-none">
+            <pre class="whitespace-pre-wrap text-sm text-gray-300 bg-gray-900 rounded-lg p-4 overflow-auto max-h-[600px]">{{ memory.content }}</pre>
+        </div>
+        {% if memory.summary %}
+        <div class="mt-4 p-3 bg-gray-800/50 rounded-lg">
+            <div class="text-xs text-gray-500 mb-1">Summary</div>
+            <div class="text-sm text-gray-300">{{ memory.summary }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-4">
+        <!-- Properties -->
+        <div class="stat-card">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">Properties</h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Source</span>
+                    <span class="text-gray-300">{{ memory.source }}{% if memory.source_ref %} ({{ memory.source_ref }}){% endif %}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Created</span>
+                    <span class="text-gray-300">{{ memory.created_at }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Last accessed</span>
+                    <span class="text-gray-300">{{ memory.last_accessed }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Access count</span>
+                    <span class="text-gray-300">{{ memory.access_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cognitive -->
+        <div class="stat-card">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">Cognitive Properties</h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-gray-500">Importance (current)</span>
+                        <span class="{% if memory.importance_current >= 0.5 %}text-green-400{% elif memory.importance_current >= 0.3 %}text-blue-400{% elif memory.importance_current >= 0.1 %}text-yellow-400{% else %}text-red-400{% endif %} font-mono">
+                            {{ memory.importance_current }}
+                        </span>
+                    </div>
+                    <div class="bg-gray-800 rounded h-2">
+                        <div class="h-2 rounded {% if memory.importance_current >= 0.5 %}bg-green-500{% elif memory.importance_current >= 0.3 %}bg-blue-500{% elif memory.importance_current >= 0.1 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                             style="width: {{ (memory.importance_current * 100)|round }}%"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Base importance</span>
+                    <span class="text-gray-300 font-mono">{{ memory.importance_base }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Confidence</span>
+                    <span class="text-gray-300 font-mono">{{ memory.confidence }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Decay half-life</span>
+                    <span class="text-gray-300">{{ memory.decay_half_life }}d</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Recency score</span>
+                    <span class="text-gray-300 font-mono">{{ memory.recency }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="stat-card">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">Tags</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for t in memory.tags %}
+                <a href="/memories?tag={{ t }}" class="tag">{{ t }}</a>
+                {% endfor %}
+                {% if not memory.tags %}
+                <span class="text-gray-600 text-sm">No tags</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="stat-card">
+            <form method="POST" action="/memory/{{ memory.id }}/forget" onsubmit="return confirm('Forget this memory?')">
+                <button class="w-full py-2 px-4 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 text-sm">
+                    Forget this memory
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

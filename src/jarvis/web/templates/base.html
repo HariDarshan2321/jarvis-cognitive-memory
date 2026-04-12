@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis — {% block title %}Memory{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        body { background: #0f1117; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+        .badge { padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge-episodic { background: #1e3a5f; color: #60a5fa; }
+        .badge-semantic { background: #1a3c34; color: #34d399; }
+        .badge-procedural { background: #3b2f1a; color: #fbbf24; }
+        .stat-card { background: #1a1d27; border: 1px solid #2d3348; border-radius: 12px; padding: 20px; }
+        .decay-bar { height: 24px; border-radius: 4px; transition: width 0.5s; }
+        .nav-link { padding: 8px 16px; border-radius: 8px; transition: background 0.2s; }
+        .nav-link:hover { background: #2d3348; }
+        .nav-link.active { background: #3b82f6; color: white; }
+        .tag { background: #2d3348; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .tag:hover { background: #3b4a6b; color: #e2e8f0; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Nav -->
+    <nav class="border-b border-gray-800 px-6 py-3 flex items-center gap-6">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">JARVIS</span>
+            <span class="text-xs text-gray-500">v0.1</span>
+        </div>
+        <div class="flex gap-1">
+            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/memories" class="nav-link {% if active_page == 'memories' %}active{% endif %}">Memories</a>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto px-6 py-6">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

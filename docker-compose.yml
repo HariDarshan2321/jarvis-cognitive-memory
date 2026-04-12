@@ -1,0 +1,29 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          memory: 20G
+
+  jarvis-ui:
+    build: .
+    ports:
+      - "7777:7777"
+    volumes:
+      - jarvis_data:/app/data
+    environment:
+      - JARVIS_DATA_DIR=/app/data
+      - OLLAMA_HOST=http://ollama:11434
+      - JARVIS_EMBED_MODEL=nomic-embed-text
+      - JARVIS_EXTRACT_MODEL=qwen3-coder:30b
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:
+  jarvis_data:

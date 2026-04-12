@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card">
+        <div class="text-3xl font-bold text-white">{{ total }}</div>
+        <div class="text-sm text-gray-400">Active Memories</div>
+    </div>
+    <div class="stat-card">
+        <div class="text-3xl font-bold text-green-400">{{ type_counts.semantic }}</div>
+        <div class="text-sm text-gray-400">Semantic (facts)</div>
+    </div>
+    <div class="stat-card">
+        <div class="text-3xl font-bold text-blue-400">{{ type_counts.episodic }}</div>
+        <div class="text-sm text-gray-400">Episodic (events)</div>
+    </div>
+    <div class="stat-card">
+        <div class="text-3xl font-bold text-yellow-400">{{ type_counts.procedural }}</div>
+        <div class="text-sm text-gray-400">Procedural (how-to)</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- Decay Health -->
+    <div class="stat-card col-span-1">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Memory Health (Decay)</h3>
+        <div class="space-y-2">
+            {% set total_for_pct = decay_buckets.strong + decay_buckets.moderate + decay_buckets.fading + decay_buckets.stale %}
+            {% if total_for_pct > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-16">Strong</span>
+                <div class="flex-1 bg-gray-800 rounded h-5">
+                    <div class="decay-bar bg-green-500/80" style="width: {{ (decay_buckets.strong / total_for_pct * 100)|round }}%"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-8 text-right">{{ decay_buckets.strong }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-16">Moderate</span>
+                <div class="flex-1 bg-gray-800 rounded h-5">
+                    <div class="decay-bar bg-blue-500/80" style="width: {{ (decay_buckets.moderate / total_for_pct * 100)|round }}%"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-8 text-right">{{ decay_buckets.moderate }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-16">Fading</span>
+                <div class="flex-1 bg-gray-800 rounded h-5">
+                    <div class="decay-bar bg-yellow-500/80" style="width: {{ (decay_buckets.fading / total_for_pct * 100)|round }}%"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-8 text-right">{{ decay_buckets.fading }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-16">Stale</span>
+                <div class="flex-1 bg-gray-800 rounded h-5">
+                    <div class="decay-bar bg-red-500/80" style="width: {{ (decay_buckets.stale / total_for_pct * 100)|round }}%"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-8 text-right">{{ decay_buckets.stale }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% if forgotten > 0 %}
+        <div class="mt-3 text-xs text-gray-500">{{ forgotten }} forgotten memories</div>
+        {% endif %}
+    </div>
+
+    <!-- Sources -->
+    <div class="stat-card col-span-1">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Sources</h3>
+        <div class="space-y-2">
+            {% for source, count in source_counts.items() %}
+            <div class="flex justify-between items-center">
+                <a href="/memories?source={{ source }}" class="text-sm text-gray-300 hover:text-white">{{ source }}</a>
+                <span class="text-sm text-gray-500">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Top Tags -->
+    <div class="stat-card col-span-1">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Tags</h3>
+        <div class="flex flex-wrap gap-2">
+            {% for tag, count in top_tags %}
+            <a href="/memories?tag={{ tag }}" class="tag hover:bg-gray-700">{{ tag }} <span class="text-gray-600">{{ count }}</span></a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Memories -->
+<div class="stat-card">
+    <h3 class="text-sm font-semibold text-gray-400 mb-3">Recent Memories</h3>
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-left text-gray-500 border-b border-gray-700">
+                <th class="py-2 px-3 w-24">Type</th>
+                <th class="py-2 px-3">Content</th>
+                <th class="py-2 px-3 w-32">Tags</th>
+                <th class="py-2 px-3 w-20 text-right">Importance</th>
+                <th class="py-2 px-3 w-20 text-right">Age</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in recent %}
+            <tr class="border-b border-gray-800 hover:bg-gray-800/50">
+                <td class="py-2 px-3"><span class="badge badge-{{ m.type }}">{{ m.type }}</span></td>
+                <td class="py-2 px-3"><a href="/memory/{{ m.id }}" class="text-gray-300 hover:text-white">{{ m.content_preview }}</a></td>
+                <td class="py-2 px-3">
+                    {% for t in m.tags %}<span class="tag mr-1">{{ t }}</span>{% endfor %}
+                </td>
+                <td class="py-2 px-3 text-right">
+                    <span class="{% if m.importance >= 0.5 %}text-green-400{% elif m.importance >= 0.3 %}text-blue-400{% elif m.importance >= 0.1 %}text-yellow-400{% else %}text-red-400{% endif %}">
+                        {{ m.importance }}
+                    </span>
+                </td>
+                <td class="py-2 px-3 text-right text-gray-500">{{ m.created_ago }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

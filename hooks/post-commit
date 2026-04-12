@@ -1,0 +1,37 @@
+#!/bin/bash
+# Jarvis post-commit hook — automatically ingest commits into memory.
+# Install: ln -sf ~/Desktop/jarvis/hooks/post-commit .git/hooks/post-commit
+
+JARVIS_DIR="${HOME}/Desktop/jarvis"
+REPO_DIR="$(git rev-parse --show-toplevel)"
+
+# Run ingestion in background to not block git
+(
+  cd "$JARVIS_DIR"
+  uv run python -c "
+import asyncio
+from jarvis.store.memory_store import MemoryStore
+from jarvis.ingestion.git import get_last_commit, extract_commit_memory
+from jarvis.models.entity import MemoryEntity
+
+async def ingest():
+    store = MemoryStore()
+    commit = get_last_commit('${REPO_DIR}')
+    if not commit:
+        return
+    memory, entities = await extract_commit_memory(commit)
+    stored = await store.add(memory)
+    for entity, role in entities:
+        existing = store.find_entity(entity.name)
+        if existing:
+            entity = existing
+        else:
+            await store.add_entity(entity)
+        await store.link_memory_entity(
+            MemoryEntity(memory_id=stored.id, entity_id=entity.id, role=role)
+        )
+    print(f'[Jarvis] Memorized commit {commit[\"hash\"]}: {stored.tags}')
+
+asyncio.run(ingest())
+" 2>/dev/null
+) &
