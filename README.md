@@ -159,6 +159,4 @@ uv run jarvis-ui
 docker compose up
 ```
 
-## License
 
-MIT
