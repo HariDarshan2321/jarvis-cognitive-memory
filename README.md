@@ -20,20 +20,46 @@ Jarvis fixes this with three ideas from cognitive science:
 
 ## Quick Start
 
-```bash
-# Prerequisites
-brew install ollama
-ollama serve
-ollama pull nomic-embed-text    # 274 MB — embeddings
-ollama pull qwen2.5:1.5b        # 986 MB — fast entity extraction
+### Prerequisites
 
-# Install
+- **Python 3.12+**
+- **[uv](https://docs.astral.sh/uv/)** — `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **[Ollama](https://ollama.com/)** — `brew install ollama` (or equivalent for your OS)
+
+### 1. Start Ollama and pull models
+
+In one terminal (leave it running):
+
+```bash
+ollama serve
+```
+
+In another terminal:
+
+```bash
+ollama pull nomic-embed-text    # 274 MB — embeddings (required)
+ollama pull qwen2.5:1.5b        # 986 MB — entity extraction (required)
+ollama pull qwen3-coder:30b     # 18 GB — optional, only needed for `consolidate` / `reflect`
+```
+
+### 2. Install Jarvis
+
+```bash
 git clone https://github.com/HariDarshan2321/jarvis-cognitive-memory.git
 cd jarvis-cognitive-memory
 uv sync
-
-# Add to Claude Code (~/.mcp.json)
+uv run --extra dev pytest tests/ -v   # sanity check — should show 40 passed
 ```
+
+### 3. Register with Claude Code
+
+Easiest — use the official CLI from inside the repo:
+
+```bash
+claude mcp add jarvis -- uv run --directory "$(pwd)" jarvis
+```
+
+Or add it manually to a project-scoped `.mcp.json` (in your project root) or `~/.claude.json` (user scope):
 
 ```json
 {
@@ -41,19 +67,53 @@ uv sync
     "jarvis": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/jarvis-cognitive-memory", "jarvis"]
+      "args": ["run", "--directory", "/absolute/path/to/jarvis-cognitive-memory", "jarvis"],
+      "env": {
+        "JARVIS_DATA_DIR": "/absolute/path/to/jarvis-cognitive-memory/data",
+        "OLLAMA_HOST": "http://localhost:11434"
+      }
     }
   }
 }
 ```
 
-```bash
-# Or run the web UI
-uv run jarvis-ui  # http://localhost:7777
+Restart Claude Code, run `/mcp`, and you should see `jarvis` listed. Try asking:
 
-# Or use Docker
-docker compose up
+> "Call the `status` tool from jarvis."
+
+### Alternatives
+
+- **Web UI** — browse memories at http://localhost:7777:
+
+  ```bash
+  uv run jarvis-ui
+  ```
+
+- **Docker** — includes Ollama + web UI, no host install needed:
+
+  ```bash
+  docker compose up
+  ```
+
+- **Cursor / Windsurf / other MCP clients** — same command (`uv run --directory <path> jarvis`) in their MCP server config. Transport is `stdio`.
+
+### Optional: auto-memorize git commits
+
+In any repo you want memorized:
+
+```bash
+ln -sf /absolute/path/to/jarvis-cognitive-memory/hooks/post-commit .git/hooks/post-commit
 ```
+
+### Configuration (env vars)
+
+| Var | Default | Purpose |
+|---|---|---|
+| `JARVIS_DATA_DIR` | `~/Desktop/jarvis/data` | Where SQLite + vectors are stored |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint |
+| `JARVIS_EMBED_MODEL` | `nomic-embed-text` | Embedding model |
+| `JARVIS_FAST_MODEL` | `qwen2.5:1.5b` | Fast extraction model |
+| `JARVIS_DEEP_MODEL` | `qwen3-coder:30b` | Deep analysis (consolidation / reflection) |
 
 ## MCP Tools
 
